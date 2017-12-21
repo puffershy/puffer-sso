@@ -12,7 +12,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import io.buji.pac4j.filter.CallbackFilter;
 import io.buji.pac4j.subject.Pac4jSubjectFactory;
 
 /**
@@ -27,9 +26,9 @@ import io.buji.pac4j.subject.Pac4jSubjectFactory;
 public class Pac4jCasConfiguration {
 	@Resource
 	private ShiroProperties properties;
-	
+
 	@Bean
-	public Realm realm(){
+	public Realm realm() {
 		return new CustomPac4jRealm();
 	}
 
@@ -65,8 +64,8 @@ public class Pac4jCasConfiguration {
 		CasClient casClient = new CasClient();
 		casClient.setConfiguration(casConfiguration);
 		casClient.setCallbackUrl(properties.getServerCallBack());
-		// 设置名称，具体作用后期跟踪，暂不实现
-		// casClient.setName("cas");
+		// 设置cas客户端名称为cas
+		casClient.setName("cas");
 		return casClient;
 	}
 
@@ -89,9 +88,10 @@ public class Pac4jCasConfiguration {
 		clients.setDefaultClient(casClient);
 		return clients;
 	}
-	
+
 	/**
 	 * 定义配置
+	 * 
 	 * @author buyi
 	 * @since 1.0.0
 	 * @date 2017下午3:22:53
@@ -99,38 +99,23 @@ public class Pac4jCasConfiguration {
 	 * @return
 	 */
 	@Bean
-	public Config casConfig(Clients clients){
+	public Config casConfig(Clients clients) {
 		Config config = new Config();
 		config.setClients(clients);
-		
+
 		return config;
 	}
-	
-	/**
-	 * 定义cas回调过滤器
-	 * @author buyi
-	 * @since 1.0.0
-	 * @date 2017下午3:25:35
-	 * @param casConfig
-	 * @return
-	 */
-	@Bean
-	public CallbackFilter callbackFilter(Config casConfig){
-		CallbackFilter callbackFilter = new CallbackFilter();
-		callbackFilter.setConfig(casConfig);
-		
-		return callbackFilter;
-	}
-	
+
 	/**
 	 * 使用cas代理了用户，所以必须通过pac4j cas进行创建对象
+	 * 
 	 * @author buyi
 	 * @since 1.0.0
 	 * @date 2017下午3:30:08
 	 * @return
 	 */
 	@Bean
-	public SubjectFactory subjectFactory(){
+	public SubjectFactory subjectFactory() {
 		return new Pac4jSubjectFactory();
 	}
 
