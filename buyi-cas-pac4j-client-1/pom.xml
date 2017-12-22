@@ -23,9 +23,6 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		
-		
-		<shiro.boot.version>1.4.0</shiro.boot.version>
-		
 		<buji.version>3.0.0</buji.version>
 		<pac4j.version>2.1.0</pac4j.version>
 	</properties>
@@ -49,13 +46,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		
-		<!-- shiro springboot 依赖 -->
-		<dependency>
-			<groupId>org.apache.shiro</groupId>
-			<artifactId>shiro-spring-boot-web-starter</artifactId>
-			<version>${shiro.boot.version}</version>
 		</dependency>
 		
 		<!-- 最新的shirocas使用 buji-pac4j 代替-->
