@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javax.servlet.Filter;
 
-import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.SubjectFactory;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
@@ -15,11 +14,9 @@ import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.pac4j.core.config.Config;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
@@ -34,8 +31,7 @@ import io.buji.pac4j.filter.SecurityFilter;
  * @date 2017下午3:28:02
  */
 @Configuration
-@Order(2)
-public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
+public class ShiroConfiguration{
 
 	/**
 	 * shiro管理器
@@ -94,8 +90,10 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 
 	@Bean(name = "shiroFilter")
 	public ShiroFilterFactoryBean shiroFilter(DefaultWebSecurityManager securityManager, Config config) {
-		// 使用父类创建shiroFilter会初始化一些配置，详细见源码
-		ShiroFilterFactoryBean filterFactoryBean = super.shiroFilterFactoryBean();
+		ShiroFilterFactoryBean filterFactoryBean = new ShiroFilterFactoryBean();
+		
+		filterFactoryBean.setFilterChainDefinitionMap(shiroFilterChainDefinition().getFilterChainMap());
+		
 		filterFactoryBean.setSecurityManager(securityManager);
 
 		// 过滤器设置
@@ -127,6 +125,11 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 		// definition.addPathDefinition("/**", "anon");
 
 		return definition;
+	}
+	
+	@Bean(name = "lifecycleBeanPostProcessor")
+	public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
+		return new LifecycleBeanPostProcessor();
 	}
 
 }
