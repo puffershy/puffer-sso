@@ -6,14 +6,15 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.Filter;
 
-import org.apache.shiro.mgt.SubjectFactory;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.spring.web.config.AbstractShiroWebFilterConfiguration;
 import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.pac4j.cas.client.CasClient;
 import org.pac4j.cas.config.CasConfiguration;
+import org.pac4j.cas.config.CasProtocol;
 import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -35,7 +36,7 @@ import io.buji.pac4j.subject.Pac4jSubjectFactory;
  */
 @Configuration
 @EnableConfigurationProperties(ShiroProperties.class)
-public class ShiroConfiguration {
+public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 
 	@Resource
 	private ShiroProperties properties;
@@ -47,40 +48,20 @@ public class ShiroConfiguration {
 	}
 
 	/**
-	 * cas服务的基本设置，包括或url等等，rest调用协议等
+	 * cas核心过滤器，把支持的client写上，filter过滤时才会处理，clients必须在casConfig.clients已经注册
+	 * <p>
+	 * 注意：该过滤器不要用spring注入，否则该过滤器会拦截所有的路径请求，除非自定义匹配规则
 	 * 
 	 * @author buyi
 	 * @since 1.0.0
-	 * @date 2017下午3:09:35
+	 * @date 2017下午2:53:21
 	 * @return
 	 */
-	@Bean
-	public CasConfiguration casConfiguration() {
-		CasConfiguration casConfiguration = new CasConfiguration();
-		casConfiguration.setLoginUrl(properties.getCasLoginUrl());
-		casConfiguration.setPrefixUrl(properties.getCasServerUrlPrefix());
-		// 默认走CasProtocol.CAS30协议
-		// casConfiguration.setProtocol(CasProtocol.CAS20);
-		return casConfiguration;
-	}
-
-	/**
-	 * 定义cas客户端
-	 * 
-	 * @author buyi
-	 * @since 1.0.0
-	 * @date 2017下午3:09:26
-	 * @param casConfiguration
-	 * @return
-	 */
-	@Bean
-	public CasClient casClient() {
-		CasClient casClient = new CasClient();
-		casClient.setConfiguration(casConfiguration());
-		casClient.setCallbackUrl(properties.getServerCallBack());
-		// 设置cas客户端名称为cas
-		casClient.setName("cas");
-		return casClient;
+	public Filter casSecurityFilter() {
+		SecurityFilter filter = new SecurityFilter();
+		filter.setClients("cas");
+		filter.setConfig(casConfig());
+		return filter;
 	}
 
 	/**
@@ -97,7 +78,6 @@ public class ShiroConfiguration {
 	@Bean
 	public Clients clients() {
 		Clients clients = new Clients();
-
 		clients.setClients(casClient());
 		clients.setDefaultClient(casClient());
 		return clients;
@@ -121,33 +101,39 @@ public class ShiroConfiguration {
 	}
 
 	/**
-	 * 使用cas代理了用户，所以必须通过pac4j cas进行创建对象
+	 * cas服务的基本设置，包括或url等等，rest调用协议等
 	 * 
 	 * @author buyi
 	 * @since 1.0.0
-	 * @date 2017下午3:30:08
+	 * @date 2017下午3:09:35
 	 * @return
 	 */
 	@Bean
-	public SubjectFactory subjectFactory() {
-		return new Pac4jSubjectFactory();
+	public CasConfiguration casConfiguration() {
+		CasConfiguration casConfiguration = new CasConfiguration(properties.getCasLoginUrl());
+		// 默认走CasProtocol.CAS30协议
+		casConfiguration.setProtocol(CasProtocol.CAS30);
+		casConfiguration.setPrefixUrl(properties.getCasServerUrlPrefix());
+		return casConfiguration;
 	}
 
 	/**
-	 * cas核心过滤器，把支持的client写上，filter过滤时才会处理，clients必须在casConfig.clients已经注册
-	 * <p>
-	 * 注意：该过滤器不要用spring注入，否则该过滤器会拦截所有的路径请求，除非自定义匹配规则
+	 * 定义cas客户端
 	 * 
 	 * @author buyi
 	 * @since 1.0.0
-	 * @date 2017下午2:53:21
+	 * @date 2017下午3:09:26
+	 * @param casConfiguration
 	 * @return
 	 */
-	public Filter casSecurityFilter() {
-		SecurityFilter filter = new SecurityFilter();
-		filter.setClients("cas");
-		filter.setConfig(casConfig());
-		return filter;
+	@Bean
+	public CasClient casClient() {
+		CasClient casClient = new CasClient();
+		casClient.setConfiguration(casConfiguration());
+		casClient.setCallbackUrl(properties.getServerCallBack());
+		// 设置cas客户端名称为cas
+		casClient.setName("cas");
+		return casClient;
 	}
 
 	/**
@@ -169,31 +155,12 @@ public class ShiroConfiguration {
 
 	/************************* pac4j cas 配置 end ************************/
 
-	/**
-	 * shiro管理器
-	 *
-	 * @author buyi
-	 * @date 2017年12月21日下午8:21:48
-	 * @since 1.0.0
-	 * @param pac4jRealm
-	 * @param subjectFactory
-	 * @return
-	 */
-	@Bean(name = "securityManager")
-	public DefaultWebSecurityManager securityManager(Realm pac4jRealm, SubjectFactory subjectFactory) {
-		DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-		securityManager.setRealm(pac4jRealm);
-		securityManager.setSubjectFactory(subjectFactory);
-		return securityManager;
-	}
+	@Bean
+	public ShiroFilterFactoryBean shiroFilterFactoryBean() {
 
-	@Bean(name = "shiroFilterFactoryBean")
-	public ShiroFilterFactoryBean shiroFilter(DefaultWebSecurityManager securityManager) {
-		ShiroFilterFactoryBean filterFactoryBean = new ShiroFilterFactoryBean();
+		((DefaultWebSecurityManager) super.securityManager).setSubjectFactory(new Pac4jSubjectFactory());
 
-		filterFactoryBean.setFilterChainDefinitionMap(shiroFilterChainDefinition().getFilterChainMap());
-
-		filterFactoryBean.setSecurityManager(securityManager);
+		ShiroFilterFactoryBean filterFactoryBean = super.shiroFilterFactoryBean();
 
 		filterFactoryBean.setFilters(shiroFilters());
 
