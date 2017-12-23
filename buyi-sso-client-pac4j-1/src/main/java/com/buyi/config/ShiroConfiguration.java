@@ -136,22 +136,6 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 		return casClient;
 	}
 
-	/**
-	 * 定义cas回调过滤器
-	 * 
-	 * @author buyi
-	 * @since 1.0.0
-	 * @date 2017下午3:25:35
-	 * @param casConfig
-	 * @return
-	 */
-	@Bean
-	public CallbackFilter callbackFilter() {
-		CallbackFilter callbackFilter = new CallbackFilter();
-		callbackFilter.setConfig(casConfig());
-
-		return callbackFilter;
-	}
 
 	/************************* pac4j cas 配置 end ************************/
 
@@ -184,7 +168,10 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 		Map<String, Filter> filters = new HashMap<>();
 		filters.put("casSecurityFilter", casSecurityFilter());
 
-		filters.put("callbackFilter", callbackFilter());
+		
+		CallbackFilter callbackFilter = new CallbackFilter();
+		callbackFilter.setConfig(casConfig());
+		filters.put("callbackFilter", callbackFilter);
 
 		LogoutFilter logoutFilter = new LogoutFilter();
 		logoutFilter.setConfig(casConfig());
