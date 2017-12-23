@@ -1,0 +1,6 @@
+/target/
+/.settings/
+/.externalToolBuilders/
+.checkstyle
+.classpath
+.project
