@@ -12,4 +12,6 @@
 
 #buyi-sso-client-pac4j-1
 ---
-基于springboot+shiro+pac4j实现单点登录客户端的demo
+基于springboot+shiro+pac4j+cas实现单点登录客户端的demo
+
+
