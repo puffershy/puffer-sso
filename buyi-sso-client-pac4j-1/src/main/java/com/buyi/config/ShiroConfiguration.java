@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.Filter;
 
+import org.apache.shiro.cache.MemoryConstrainedCacheManager;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.spring.web.config.AbstractShiroWebFilterConfiguration;
@@ -24,7 +25,6 @@ import org.springframework.context.annotation.Configuration;
 import io.buji.pac4j.filter.CallbackFilter;
 import io.buji.pac4j.filter.LogoutFilter;
 import io.buji.pac4j.filter.SecurityFilter;
-import io.buji.pac4j.realm.Pac4jRealm;
 import io.buji.pac4j.subject.Pac4jSubjectFactory;
 
 /**
@@ -44,7 +44,7 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 	/************************* pac4j cas 配置 begin ************************/
 	@Bean
 	public Realm realm() {
-		return new Pac4jRealm();
+		return new CustomPac4jRealm();
 	}
 
 	/**
@@ -136,13 +136,15 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 		return casClient;
 	}
 
-
 	/************************* pac4j cas 配置 end ************************/
 
 	@Bean
 	public ShiroFilterFactoryBean shiroFilterFactoryBean() {
 
 		((DefaultWebSecurityManager) super.securityManager).setSubjectFactory(new Pac4jSubjectFactory());
+
+		// shouquanxinxi
+		((DefaultWebSecurityManager) super.securityManager).setCacheManager(new MemoryConstrainedCacheManager());
 
 		ShiroFilterFactoryBean filterFactoryBean = super.shiroFilterFactoryBean();
 
@@ -155,9 +157,10 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 	public ShiroFilterChainDefinition shiroFilterChainDefinition() {
 		DefaultShiroFilterChainDefinition definition = new DefaultShiroFilterChainDefinition();
 		definition.addPathDefinition("/callback", "callbackFilter");
-		definition.addPathDefinition("/admin/login", "anon");
-		definition.addPathDefinition("/admin/logout", "logoutFilter");
-		definition.addPathDefinition("/**", "casSecurityFilter");
+		definition.addPathDefinition("/", "anon");
+		definition.addPathDefinition("/logout", "logoutFilter");
+		definition.addPathDefinition("/admin/user/detail", "perms[admin:user:detail]");
+		definition.addPathDefinition("/admin/**", "casSecurityFilter");
 
 		return definition;
 	}
@@ -168,7 +171,6 @@ public class ShiroConfiguration extends AbstractShiroWebFilterConfiguration {
 		Map<String, Filter> filters = new HashMap<>();
 		filters.put("casSecurityFilter", casSecurityFilter());
 
-		
 		CallbackFilter callbackFilter = new CallbackFilter();
 		callbackFilter.setConfig(casConfig());
 		filters.put("callbackFilter", callbackFilter);
